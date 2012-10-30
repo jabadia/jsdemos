@@ -1,0 +1,119 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+    <meta http-equiv="X-UA-Compatible" content="IE=7,IE=9" />   
+   <!--The viewport meta tag is used to improve the presentation and behavior of the samples 
+      on iOS devices-->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Mapa con WMS</title> 
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/dojo/dijit/themes/claro/claro.css"> 
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/esri/css/esri.css" />
+    
+    <style> 
+      html, body { height: 98%; width: 98%; margin: 0; padding: 5px; }
+    </style> 
+    <script type="text/javascript">var djConfig = {parseOnLoad: true};</script> 
+    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2"></script> 
+    
+    <script type="text/javascript"> 
+      dojo.require("dijit.layout.BorderContainer");
+      dojo.require("dijit.layout.ContentPane");
+      dojo.require("dijit.layout.AccordionContainer");
+      dojo.require("esri.map");
+      dojo.require("esri.layers.wms");
+      dojo.require("esri.dijit.Popup");
+      
+      var map;
+
+ 
+      function init() 
+      {
+        esri.config.defaults.io.proxyUrl = "/proxy.php";
+
+        /*
+        var initExtent = new esri.geometry.Extent({
+          "xmax":677023.306377278,
+          "ymin":4613757.1423038235,
+          "xmin":676266.1020657241,
+          "ymax":4613917.182331818,
+          "spatialReference":{"wkid":102100}});
+        */
+        var initExtent = new esri.geometry.Extent({
+          "xmin":675932.6633807631,
+          "ymin":4613576.357454983,
+          "xmax":677447.0720035353,
+          "ymax":4613896.437510899,
+          "spatialReference":{"wkid":"25830"}
+        });
+
+        var popup = new esri.dijit.Popup({
+          fillSymbol: new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255,0,0]), 2), new dojo.Color([255,255,0,0.25]))
+        }, dojo.create("div"));
+
+        map = new esri.Map("map",{infoWindow:popup, extent:initExtent});
+        var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://www.mapabase.es/ArcGIS/rest/services/Raster/MapaBase_o_ETRS89_30N_MB2/MapServer");
+        map.addLayer(basemap);
+       
+        var wmsLayer = new esri.layers.WMSLayer("http://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?"); 
+        //set visible layers - in this case US Cities
+        wmsLayer.setVisibleLayers([0,1,2,3,4,5,6,7,8,9,10,11,12]);  
+        wmsLayer.setImageFormat("png");
+        map.addLayer(wmsLayer);
+  
+        dojo.connect(map, 'onLoad', function(theMap) {
+          //resize the map when the browser resizes
+          dojo.connect(dijit.byId('map'), 'resize', map,map.resize);
+
+          dojo.connect(dijit.byId('map'), 'onClick', function(evt)
+          {
+            console.log(evt);
+            var point = evt.mapPoint;
+            var mapPoint = evt;
+            var extent = map.extent;
+
+            console.log(point);
+            console.log(extent);
+
+            console.log(wmsLayer);
+
+            var getFeatureInfoRequest = esri.request({
+              url: wmsLayer.url,
+              content: {
+                "REQUEST": "GetFeatureInfo",
+                "VERSION": wmsLayer.version,
+                "SRS": "EPSG:25830",
+                "BBOX": map.extent.xmin + "," + map.extent.ymin + "," + map.extent.xmax + "," + map.extent.ymax,
+                "WIDTH": map.width,
+                "HEIGHT": map.height,
+                "X": evt.layerX,
+                "Y": evt.layerY
+              },
+              handleAs: "text"
+            });
+
+            getFeatureInfoRequest.then(function(response)
+            {
+              console.log(response);
+              map.infoWindow.setTitle("GetFeatureInfo");
+              map.infoWindow.setContent(response);
+              map.infoWindow.show(point);
+            });
+          });
+        });
+      }
+
+
+
+      dojo.addOnLoad(init);
+    </script> 
+  </head> 
+  
+  <body class="claro"> 
+    <div id="content" dojotype="dijit.layout.BorderContainer" design="headline" gutters="true" style="width: 100%; height: 100%; margin: 0;"> 
+      <div id="map" dojotype="dijit.layout.ContentPane" region="center" style="overflow:hidden;"> 
+      </div> 
+    </div> 
+  </body> 
+ 
+</html>
