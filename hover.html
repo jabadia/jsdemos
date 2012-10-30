@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=7,IE=9" />
+    <!--The viewport meta tag is used to improve the presentation and behavior of the samples 
+      on iOS devices-->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Santander - onHover</title>
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/dojo/dijit/themes/claro/claro.css">
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/esri/css/esri.css" />
+    <style>
+      html, body, #mapDiv, .map.container {
+        padding:0;
+        margin:0;
+        height:100%;
+      }
+    </style>
+    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2"></script>
+    <script type="text/javascript" language="Javascript">
+      dojo.require("esri.map");
+      dojo.require("esri.layers.FeatureLayer");
+      dojo.require("dijit.TooltipDialog");
+      dojo.require("dojo.number");
+      
+      var map;
+      var dialog;
+/*
+      function maxOffset(map, pixelTolerance) {
+        return Math.floor(map.extent.getWidth() / map.width) * pixelTolerance;
+      };
+*/
+      function init() {
+        var startExtent = new esri.geometry.Extent({
+            "xmin":-555382.0952226977,
+            "ymin":5329668.390724985,
+            "xmax":-349154.99290921324,
+            "ymax":5390206.517126868,
+            "spatialReference":{"wkid":102100}
+          });
+        //create map
+        map = new esri.Map("mapDiv",{extent:startExtent});
+        
+        dojo.connect(map,'onLoad',function(){
+         dojo.connect(window, 'resize', map, map.resize);
+        });
+        //create and add new layer
+        var layer = new esri.layers.ArcGISTiledMapServiceLayer("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");
+        //var layer = new esri.layers.ArcGISTiledMapServiceLayer("http://www.mapabase.es/ArcGIS/rest/services/Raster/Mapabase_o_WGS84_WM_MB2/MapServer");
+        map.addLayer(layer);
+
+        var municipiosCantabria = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/0", {
+          //mode: esri.layers.FeatureLayer.MODE_SNAPSHOT,
+          //maxAllowableOffset: maxOffset(map,1),
+          autoGeneralize: true,
+          editable: false,
+          outFields: ["*"]
+        });
+        municipiosCantabria.setDefinitionExpression("CPRO = 39");
+
+        dojo.connect(municipiosCantabria, "onLoad", function() {
+        dojo.connect(map, "onZoomEnd", function() {
+          //municipiosCantabria.setMaxAllowableOffset(maxOffset(map,1));
+          console.log("maxOffset: " + municipiosCantabria.getMaxAllowableOffset());
+          });
+        });
+
+
+        var outline = new esri.symbol.SimpleLineSymbol()
+          .setColor(dojo.colorFromHex('#fff'));
+        var sym = new esri.symbol.SimpleFillSymbol()
+          .setColor(new dojo.Color([52, 67, 83, 0.4]))
+          .setOutline(outline);
+        var renderer = new esri.renderer.SimpleRenderer(sym);
+
+        //var symbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255,255,255,0.35]), 1),new dojo.Color([125,125,125,0.35]));
+        municipiosCantabria.setRenderer(new esri.renderer.SimpleRenderer(sym));
+        map.addLayer(municipiosCantabria);
+        
+       
+
+        map.infoWindow.resize(245,125);
+
+        
+        dialog = new dijit.TooltipDialog({
+          id: "tooltipDialog",
+          style: "position: absolute; width: 250px; font: normal normal normal 10pt Helvetica;z-index:100"
+        });
+        dialog.startup();
+        
+        var highlightSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255,0,0]), 3), new dojo.Color([125,125,125,0.35]));
+
+        //close the dialog when the mouse leaves the highlight graphic
+        dojo.connect(map, "onLoad", function(){
+          map.graphics.enableMouseEvents();
+          dojo.connect(map.graphics,"onMouseOut",closeDialog);        
+        });
+
+                
+        //listen for when the onMouseOver event fires on the countiesGraphicsLayer
+        //when fired, create a new graphic with the geometry from the event.graphic and add it to the maps graphics layer
+        dojo.connect(municipiosCantabria, "onMouseOver", function(evt) {
+          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${CPRO:NumberFormat}<br/>"
+                             + "<b>Código Municipio: </b>${CMUN:NumberFormat}";
+        
+        var content = esri.substitute(evt.graphic.attributes,t);
+        var highlightGraphic = new esri.Graphic(evt.graphic.geometry,highlightSymbol);
+        map.graphics.add(highlightGraphic);
+        
+        dialog.setContent(content);
+
+        dojo.style(dialog.domNode, "opacity", 0.85);
+        dijit.popup.open({popup: dialog, x:evt.pageX,y:evt.pageY});
+          
+      });
+
+      }
+
+    
+      function closeDialog() {
+          map.graphics.clear();
+          dijit.popup.close(dialog);
+      }
+      
+
+
+      dojo.addOnLoad(init);
+    </script>
+  </head>
+  <body class="claro">
+    Pasa el ratón por encima.
+    <div id="mapDiv"></div>
+  </body>
+</html>
