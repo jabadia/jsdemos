@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=7,IE=9" />
+    <!--The viewport meta tag is used to improve the presentation and behavior of the samples on iOS devices-->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Provincias y Municipios - onHover</title>
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/dojo/dijit/themes/claro/claro.css">
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/esri/css/esri.css" />
+    <style>
+      html, body, #mapDiv, .map.container 
+      {
+        padding:0;
+        margin:0;
+        height:100%;
+      }
+    </style>
+    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2"></script>
+    <script type="text/javascript" language="Javascript">
+      dojo.require("esri.map");
+      dojo.require("esri.layers.FeatureLayer");
+      dojo.require("dijit.TooltipDialog");
+      dojo.require("dojo.number");
+      
+      var map;
+      var dialog;
+
+      function init() 
+      {
+        var startExtent = new esri.geometry.Extent({
+            "xmin":-1949837.9638198118,
+            "ymin":4455581.057257967,
+            "xmax":1349795.6731937996,
+            "ymax":5654113.660769211,          
+            "spatialReference":{"wkid":102100}
+          });
+
+        //create map
+        map = new esri.Map("mapDiv",{extent:startExtent});
+        
+        dojo.connect(map,'onLoad',function(){
+         dojo.connect(window, 'resize', map, map.resize);
+        });
+
+        //create and add new layer
+        var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");
+        //var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://www.mapabase.es/ArcGIS/rest/services/Raster/Mapabase_o_WGS84_WM_MB2/MapServer");
+        map.addLayer(basemap);
+
+        var options = {
+          autoGeneralize: true,
+          editable: false,
+          outFields: ["*"]
+        };
+
+        var provincias = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/2", options);
+        var municipios = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/0", options);
+        var distritos  = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/1", options);
+
+        var outline1 = new esri.symbol.SimpleLineSymbol()
+          .setColor(dojo.colorFromHex('#fff'));
+        var outline2 = new esri.symbol.SimpleLineSymbol()
+          .setColor(dojo.colorFromHex('#ccf'));
+        var sym1 = new esri.symbol.SimpleFillSymbol()
+          .setColor(new dojo.Color([52, 67, 83, 0.4]))
+          .setOutline(outline1);
+        var sym2 = new esri.symbol.SimpleFillSymbol()
+          .setColor(new dojo.Color([52, 67, 83, 0.4]))
+          .setOutline(outline2);
+
+        provincias.setRenderer(new esri.renderer.SimpleRenderer(sym1));
+        municipios.setRenderer(new esri.renderer.SimpleRenderer(sym2));
+        distritos.setRenderer(new esri.renderer.SimpleRenderer(sym1));
+
+        provincias.maxScale = 2000001;
+        municipios.minScale = 2000000;
+        municipios.maxScale =  200001;
+        distritos.minScale =   200000;
+        map.addLayers([distritos, municipios, provincias]);
+        
+        map.infoWindow.resize(245,125);
+       
+        dialog = new dijit.TooltipDialog({
+          id: "tooltipDialog",
+          style: "position: absolute; width: 250px; font: normal normal normal 10pt Helvetica;z-index:100"
+        });
+        dialog.startup();
+        
+        var highlightSymbol = new esri.symbol.SimpleFillSymbol(
+          esri.symbol.SimpleFillSymbol.STYLE_SOLID, 
+          new esri.symbol.SimpleLineSymbol(
+            esri.symbol.SimpleLineSymbol.STYLE_SOLID, 
+            new dojo.Color([255,0,0]), 3), 
+          new dojo.Color([125,125,125,0.35])
+        );
+
+        //close the dialog when the mouse leaves the highlight graphic
+        dojo.connect(map, "onLoad", function(){
+          map.graphics.enableMouseEvents();
+          dojo.connect(map.graphics,"onMouseOut",closeDialog);        
+
+          dojo.connect(map.graphics, "onClick", function(evt) {
+
+            var extent = evt.graphic.geometry.getExtent();
+            console.log(extent);
+            map.setExtent(extent);
+            return true;
+
+          });
+        });
+
+        //dojo.connect(map,"onMouseDragStart",closeDialog);        
+        //dojo.connect(map,"onMouseWheel",closeDialog);        
+        dojo.connect(map,"onPanStart",closeDialog);        
+        dojo.connect(map,"onZoomStart",closeDialog);        
+                
+        var showInfo = function(evt, t)
+        {
+          var content = esri.substitute(evt.graphic.attributes,t);
+          var highlightGraphic = new esri.Graphic(evt.graphic.geometry,highlightSymbol);
+          map.graphics.clear();
+          map.graphics.add(highlightGraphic);
+          
+          dialog.setContent(content);
+
+          dojo.style(dialog.domNode, "opacity", 0.85);
+          dijit.popup.open({popup: dialog, x:evt.pageX,y:evt.pageY});          
+        };
+
+        //listen for when the onMouseOver event fires on the countiesGraphicsLayer
+        //when fired, create a new graphic with the geometry from the event.graphic and add it to the maps graphics layer
+        dojo.connect(provincias, "onMouseOver", function(evt) {
+          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${PROV:NumberFormat}<br/>";          
+          showInfo(evt,t);
+        });
+
+        dojo.connect(municipios, "onMouseOver", function(evt) {
+          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${CPRO:NumberFormat}<br/><b>Código Municipio: </b>${CMUN:NumberFormat}<br/>";
+          showInfo(evt,t);
+        });
+
+        dojo.connect(distritos, "onMouseOver", function(evt) {
+          var t = "<b>Distrito ${DISTRITO}</b><hr><b>Código Provincia/Municipio: </b>${PROVMUN:NumberFormat}<br/>";
+          showInfo(evt,t);
+        });
+
+      }
+    
+      function closeDialog() {
+          map.graphics.clear();
+          dijit.popup.close(dialog);
+      }
+      
+      dojo.addOnLoad(init);
+    </script>
+  </head>
+  <body class="claro">
+    Pasa el ratón por encima.
+    <div id="mapDiv"></div>
+  </body>
+</html>
