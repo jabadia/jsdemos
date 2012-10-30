@@ -38,7 +38,8 @@
       {
         esri.hide(loading);
         map.enableMapNavigation();
-        map.showZoomSlider();    
+        map.showZoomSlider();
+        console.log(error);
       }      
  
       function init() 
@@ -94,6 +95,8 @@
             // console.log(extent);
             // console.log(wmsLayer);
 
+            showLoading();
+
             var getFeatureInfoRequest = esri.request({
               url: wmsLayer.url,
               content: {
@@ -114,6 +117,14 @@
               map.infoWindow.setTitle("GetFeatureInfo");
               map.infoWindow.setContent(response);
               map.infoWindow.show(point);
+              hideLoading();
+            },
+            function(error)
+            {
+              map.infoWindow.setTitle("GetFeatureInfo - ERROR");
+              map.infoWindow.setContent(error.responseText);
+              map.infoWindow.show(point);
+              hideLoading(error);  
             });
           });
         });
