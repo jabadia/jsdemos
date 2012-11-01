@@ -15,8 +15,13 @@
         margin:0;
         height:100%;
       }
+      #tip
+      {
+        position: absolute;
+        z-index: 100;
+      }
     </style>
-    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2"></script>
+    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2compact"></script>
     <script type="text/javascript" language="Javascript">
       dojo.require("esri.map");
       dojo.require("esri.layers.FeatureLayer");
@@ -56,7 +61,8 @@
 
         var provincias = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/2", options);
         var municipios = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/0", options);
-        var distritos  = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/1", options);
+        //var distritos  = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites/FeatureServer/1", options);
+        var secciones  = new esri.layers.FeatureLayer("http://54.247.188.183/arcgis/rest/services/limites/Limites_Padron/FeatureServer/3", options);
 
         var outline1 = new esri.symbol.SimpleLineSymbol()
           .setColor(dojo.colorFromHex('#fff'));
@@ -71,13 +77,14 @@
 
         provincias.setRenderer(new esri.renderer.SimpleRenderer(sym1));
         municipios.setRenderer(new esri.renderer.SimpleRenderer(sym2));
-        distritos.setRenderer(new esri.renderer.SimpleRenderer(sym1));
+        secciones.setRenderer(new esri.renderer.SimpleRenderer(sym1));
 
         provincias.maxScale = 2000001;
         municipios.minScale = 2000000;
-        municipios.maxScale =  200001;
-        distritos.minScale =   200000;
-        map.addLayers([distritos, municipios, provincias]);
+        municipios.maxScale =  100001;
+        secciones.minScale =   100000;
+
+        map.addLayers([secciones, municipios, provincias]);
         
         map.infoWindow.resize(245,125);
        
@@ -140,8 +147,8 @@
           showInfo(evt,t);
         });
 
-        dojo.connect(distritos, "onMouseOver", function(evt) {
-          var t = "<b>Distrito ${DISTRITO}</b><hr><b>Código Provincia/Municipio: </b>${PROVMUN:NumberFormat}<br/>";
+        dojo.connect(secciones, "onMouseOver", function(evt) {
+          var t = "<b>Sección Censal ${OBJECTID}</b><hr><b>-: </b>-<br/>";
           showInfo(evt,t);
         });
 
@@ -156,7 +163,7 @@
     </script>
   </head>
   <body class="claro">
-    Pasa el ratón por encima.
+    <div id="tip">Pasa el ratón por encima.</div>
     <div id="mapDiv"></div>
   </body>
 </html>
