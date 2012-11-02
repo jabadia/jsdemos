@@ -26,6 +26,15 @@
         background: white;
         opacity: 0.8;
       }
+      span.visible
+      {
+        font-weight: bold;
+        color: #00C;
+      }
+      #calcStats
+      {
+        display: none;
+      }
     </style>
     <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2compact"></script>
     <script type="text/javascript" language="Javascript">
@@ -37,6 +46,7 @@
       var map;
       var dialog;
       var provincias,municipios,secciones;
+      var basemap1, basemap2;
 
       function init() 
       {
@@ -56,9 +66,10 @@
         });
 
         //create and add new layer
-        var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");
-        //var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://www.mapabase.es/ArcGIS/rest/services/Raster/Mapabase_o_WGS84_WM_MB2/MapServer");
-        map.addLayer(basemap);
+        basemap1 = new esri.layers.ArcGISTiledMapServiceLayer("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");
+        basemap2 = new esri.layers.ArcGISTiledMapServiceLayer("http://www.mapabase.es/ArcGIS/rest/services/Raster/Mapabase_o_WGS84_WM_MB2/MapServer");
+        basemap2.hide();
+        map.addLayers([basemap1, basemap2]);
 
         var options = {
           autoGeneralize: true,
@@ -164,6 +175,7 @@
 
         dojo.connect(dojo.byId('toggleProvincias'), "onclick", toggleProvincias);
         dojo.connect(dojo.byId('calcStats'), "onclick", calcStats);
+        dojo.connect(dojo.byId('toggleBasemap'), "onclick", toggleBasemap);
       }
     
       function closeDialog() {
@@ -189,6 +201,20 @@
           secciones.show();
           provincias.setMaxScale(2000001);
           dojo.byId('toggleProvincias').innerHTML = 'Ver Solo Provincias';
+        }
+      }
+
+      function toggleBasemap()
+      {
+        if( basemap1.visible )
+        {
+          basemap1.hide();
+          basemap2.show();
+        }
+        else
+        {
+          basemap1.show();
+          basemap2.hide();
         }
       }
 
@@ -218,7 +244,8 @@
               ringCount += 1;
             });
           });
-          stats.innerHTML += layer.name + " - g: " + graphicCount + ", r: " + ringCount + ", v: " + vertexCount + "<br/>";
+          var layerVisible = layer.layer.visible && layer.layer.visibleAtMapScale;
+          stats.innerHTML += "<span class='" + (layerVisible? "visible" : "") + "'> " + layer.name + " - g: " + graphicCount + ", r: " + ringCount + ", v: " + vertexCount + "</span><br/>";
         });
       }      
       
@@ -229,6 +256,7 @@
     <div id="tip"><span>Mueve el ratón por el mapa, y haz click para hacer zoom. </span>
       <button id="toggleProvincias" type="button">Ver Solo Provincias</button>
       <button id="calcStats" type="button">Estadísticas</button>
+      <button id="toggleBasemap" type="button">Cambiar Mapa Base</button>
       <div id="stats"></div>
     </div>
     <div id="mapDiv"></div>
