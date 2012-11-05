@@ -247,7 +247,7 @@
           });
 
           var statsInnerHTML = "<span>";          
-          statsInnerHTML + layer.name + " - graphics: " + graphicCount + ", rings: " + ringCount + ", vertices: " + vertexCount;
+          statsInnerHTML += layer.name + " - graphics: " + graphicCount + ", rings: " + ringCount + ", vertices: " + vertexCount;
           statsInnerHTML += " update time: " + elapsed/1000 + " seg";
           statsInnerHTML += "</span><br/>";
           stats.innerHTML = statsInnerHTML;
