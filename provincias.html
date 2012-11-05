@@ -223,7 +223,7 @@
         if(startingUpdate)
         {
           var img = startingUpdate? "<img src='loading.gif' height='12' width='12'>" : "";
-          stats.innerHTML = "<span>" + layer.name + " - graphics: "+img+", rings: "+img+", vertices: "+img+"</span><br/>";
+          stats.innerHTML = "<span><b>" + layer.name + "</b> - graphics: "+img+", rings: "+img+", <b>vertices: "+img+"</b></span><br/>";
           startTime = new Date().getTime();
         }
         else
@@ -247,8 +247,8 @@
           });
 
           var statsInnerHTML = "<span>";          
-          statsInnerHTML += layer.name + " - graphics: " + graphicCount + ", rings: " + ringCount + ", vertices: " + vertexCount;
-          statsInnerHTML += " update time: " + elapsed/1000 + " seg";
+          statsInnerHTML += "<b>" + layer.name + "</b> - graphics: " + graphicCount + ", rings: " + ringCount + ", <b>vertices: " + vertexCount + "</b>";
+          statsInnerHTML += ", update time: <b>" + elapsed/1000 + " seg</b>";
           statsInnerHTML += "</span><br/>";
           stats.innerHTML = statsInnerHTML;
         }
