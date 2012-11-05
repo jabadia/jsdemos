@@ -14,7 +14,7 @@
         padding:0;
         margin:0;
         height:100%;
-        font-family: verdana;
+        font-family: arial;
       }
       #tip
       {
@@ -25,11 +25,6 @@
         text-align: center;
         background: white;
         opacity: 0.8;
-      }
-      span.visible
-      {
-        font-weight: bold;
-        color: #00C;
       }
       #calcStats
       {
@@ -47,6 +42,7 @@
       var dialog;
       var provincias,municipios,secciones;
       var basemap1, basemap2;
+      var startTime;
 
       function init() 
       {
@@ -100,7 +96,7 @@
         provincias.maxScale = 2000001;
         municipios.minScale = 2000000;
         municipios.maxScale =  100001;
-        secciones.minScale =   100000;
+        secciones.minScale  =  100000;
 
         map.addLayers([secciones, municipios, provincias]);
         
@@ -169,12 +165,14 @@
           showInfo(evt,t);
         });
 
-        dojo.connect(provincias, "onUpdateEnd", calcStats);
-        dojo.connect(municipios, "onUpdateEnd", calcStats);
-        dojo.connect(secciones, "onUpdateEnd", calcStats);
+        dojo.connect(provincias, "onUpdateEnd", function(){ calcStats(false, { name: "provincias", layer: provincias}) });
+        dojo.connect(municipios, "onUpdateEnd", function(){ calcStats(false, { name: "municipios", layer: municipios}) });
+        dojo.connect(secciones,  "onUpdateEnd", function(){ calcStats(false, { name: "secciones", layer: secciones})   });
+        dojo.connect(provincias, "onUpdateStart", function(){ calcStats(true, { name: "provincias", layer: provincias}) });
+        dojo.connect(municipios, "onUpdateStart", function(){ calcStats(true, { name: "municipios", layer: municipios}) });
+        dojo.connect(secciones, "onUpdateStart", function(){ calcStats(true, { name: "secciones", layer: secciones})   });
 
         dojo.connect(dojo.byId('toggleProvincias'), "onclick", toggleProvincias);
-        dojo.connect(dojo.byId('calcStats'), "onclick", calcStats);
         dojo.connect(dojo.byId('toggleBasemap'), "onclick", toggleBasemap);
       }
     
@@ -218,18 +216,21 @@
         }
       }
 
-      function calcStats()
+      function calcStats(startingUpdate, layer)
       {
-        var layers = [
-          { name: "provincias", layer: provincias},
-          { name: "municipios", layer: municipios},
-          { name: "secciones", layer: secciones},
-        ];
         var stats = dojo.byId('stats');
-        stats.innerHTML = "";
 
-        dojo.forEach( layers, function(layer)
+        if(startingUpdate)
         {
+          var img = startingUpdate? "<img src='loading.gif' height='12' width='12'>" : "";
+          stats.innerHTML = "<span>" + layer.name + " - graphics: "+img+", rings: "+img+", vertices: "+img+"</span><br/>";
+          startTime = new Date().getTime();
+        }
+        else
+        {
+          var endTime = new Date().getTime();
+          var elapsed = endTime - startTime;
+
           var vertexCount = 0;
           var ringCount = 0;
           var graphicCount = 0;
@@ -244,9 +245,13 @@
               ringCount += 1;
             });
           });
-          var layerVisible = layer.layer.visible && layer.layer.visibleAtMapScale;
-          stats.innerHTML += "<span class='" + (layerVisible? "visible" : "") + "'> " + layer.name + " - g: " + graphicCount + ", r: " + ringCount + ", v: " + vertexCount + "</span><br/>";
-        });
+
+          var statsInnerHTML = "<span>";          
+          statsInnerHTML + layer.name + " - graphics: " + graphicCount + ", rings: " + ringCount + ", vertices: " + vertexCount;
+          statsInnerHTML += " update time: " + elapsed/1000 + " seg";
+          statsInnerHTML += "</span><br/>";
+          stats.innerHTML = statsInnerHTML;
+        }
       }      
       
       dojo.addOnLoad(init);
