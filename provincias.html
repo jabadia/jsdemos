@@ -248,6 +248,7 @@
 
           var statsInnerHTML = "<span>";          
           statsInnerHTML += "<b>" + layer.name + "</b> - graphics: " + graphicCount + ", rings: " + ringCount + ", <b>vertices: " + vertexCount + "</b>";
+          statsInnerHTML += ", maxAllowableOffset: " + layer.layer.getMaxAllowableOffset() + " m."
           statsInnerHTML += ", update time: <b>" + elapsed/1000 + " seg</b>";
           statsInnerHTML += "</span><br/>";
           stats.innerHTML = statsInnerHTML;
