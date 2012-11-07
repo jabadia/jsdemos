@@ -151,14 +151,14 @@ div {
   }
 
   #mapLayerContainer {
-    height: 500px;
+    height: 800px;
     padding-top: 10px;
     width:25.0%;
   }
 
   .mapContainer {
     border-left-width: 0;
-    height: 500px;
+    height: 800px;
     padding: 0;
     width:75.0%;
   }
@@ -175,7 +175,7 @@ div {
     padding: 5px 0 0 0;
   }
   #map {
-    height: 500px;
+    height: 800px;
     position: relative;
     width: 100%;
   }
