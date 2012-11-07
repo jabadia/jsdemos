@@ -56,7 +56,8 @@ mapLayers.info = [{
 },{
   "options" : {
     "id": "AGS - Avistamientos de Aves - Base",
-    "visible":false
+    "visible":false,
+    "opacity": 0.5
   },
   "url": "http://54.247.188.183/arcgis/rest/services/cantabria/101HabitatsCantabria_Base/MapServer",
   "controlType": "checkbox",
