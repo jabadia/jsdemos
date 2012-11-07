@@ -40,6 +40,21 @@ mapLayers.info = [{
 }, {
   "options": { "id": "Stamen Watercolor", "visible": false, "subDomains": mapLayers.abcd, "copyright": "Stamen Watercolor" },
   "url": "http://${subDomain}.tile.stamen.com/watercolor/${level}/${col}/${row}.jpg"
+},{
+  "url": "http://54.247.188.183/arcgis/rest/services/xunta/XuntaBase/MapServer/WMTS",
+  "options": {
+    "id" : "Galicia WMTS",
+    "serviceMode": "RESTful",
+    "layerInfo": {
+      "identifier" : "xunta_XuntaBase",
+      "tileMatrixSet": "GoogleMapsCompatible",
+      "format" : "png"
+    },
+    "visible": false,
+    "opacity" : 0.7
+  },
+  "controlType": "checkbox",
+  "layerType": "wmts"
 }, {
   /*
   "options": { "id": "MapaBASE - PNOA", "visible":false, "copyright": "ESRI España - IGN" },
@@ -55,7 +70,7 @@ mapLayers.info = [{
   "controlType": "checkbox"
 },{
   "options" : {
-    "id": "AGS - Avistamientos de Aves - Base",
+    "id": "AGS - Cantabria - Base",
     "visible":false,
     "opacity": 0.5
   },
@@ -64,7 +79,7 @@ mapLayers.info = [{
   "layerType":"dynamic"
 }, {
   "options" : { 
-    "id": "AGS - Avistamientos de Aves", 
+    "id": "AGS - Cantabria - Aves", 
     "visible":false
   },
   "url": "http://54.247.188.183/arcgis/rest/services/cantabria/HabitatsCantabria_Aves/MapServer",
@@ -72,7 +87,7 @@ mapLayers.info = [{
   "layerType":"dynamic"
 },{
   "options" : {
-    "id": "AGS - Aves - Features",
+    "id": "AGS - Cantabria - Features",
     "visible":true
   },
   "url": "http://54.247.188.183/arcgis/rest/services/cantabria/HabitatsCantabria_Aves/FeatureServer/0",

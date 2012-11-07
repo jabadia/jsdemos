@@ -70,6 +70,12 @@ div {
   background: transparent;
 }
 
+.mapLayerList {
+    padding: 5px 5px 0 5px;
+    margin: 5px 0 0 0;
+    border: 1px #888 solid;
+  }
+  
 /* drop shadow styles */
 .ds { background: #000; overflow: hidden; position: absolute; z-index: 2; }
 #ds-l div { height: 100%; }
@@ -171,8 +177,8 @@ div {
   .top span {
     visibility: hidden;
   }
-  #mapLayerList {
-    padding: 5px 0 0 0;
+  .mapLayerList {
+    padding: 5px 5px 0 5px;
   }
   #map {
     height: 800px;

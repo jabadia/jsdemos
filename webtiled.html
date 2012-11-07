@@ -26,10 +26,14 @@
       dojo.require("esri.layers.WebTiledLayer");
       dojo.require("esri.layers.FeatureLayer");
       dojo.require("esri.layers.agsdynamic");
-      dojo.require("extras.LayerListToggle");
+      dojo.require("esri.layers.wmts");
+      dojo.require("extras.LayerListToggle");      
       
       var map;
       function init() {
+
+        esri.config.defaults.io.proxyUrl = "proxy.php";
+
         if ( dojo.isIE < 9 ) {
           dojo.query("body")[0].innerHTML = "";
           alert("Sorry, this sample requires Internet Explorer 9 or later, Chrome, Firefox or Safari.");
@@ -83,6 +87,11 @@
           {
             var lyr = new esri.layers.ArcGISDynamicMapServiceLayer(l.url, l.options);
             map.addLayer(lyr);            
+          }
+          else if( l.layerType == "wmts")
+          {
+            var lyr = new esri.layers.WMTSLayer(l.url, l.options);
+            map.addLayer(lyr);
           }
 
           // add a radio/check for the layer
@@ -179,8 +188,8 @@
   <div class="row">
     <div id="mapLayerContainer" class="col">Capas:
       <div id="twoLists">
-        <div id="mapLayerListCheck"></div>
-        <div id="mapLayerListRadio"></div>
+        <div class="mapLayerList" id="mapLayerListCheck"></div>
+        <div class="mapLayerList" id="mapLayerListRadio"></div>
       </div>
     </div>
     <div class="mapContainer col">
