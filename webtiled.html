@@ -24,6 +24,8 @@
       dojo.require("esri.map");
       dojo.require("esri.dijit.Attribution");
       dojo.require("esri.layers.WebTiledLayer");
+      dojo.require("esri.layers.FeatureLayer");
+      dojo.require("esri.layers.agsdynamic");
       dojo.require("extras.LayerListToggle");
       
       var map;
@@ -66,8 +68,22 @@
         // create and add the layers
         // show a radio button for each
         dojo.forEach(mapLayers.info, function(l) {
-          var lyr = new wtl(l.url, l.options);
-          map.addLayer(lyr);
+          l.layerType = l.layerType || "webtiled";
+          if( l.layerType == "webtiled" )
+          {
+            var lyr = new wtl(l.url, l.options);
+            map.addLayer(lyr);
+          }
+          else if( l.layerType == "feature")
+          {
+            var lyr = new esri.layers.FeatureLayer(l.url, l.options);
+            map.addLayer(lyr);
+          }
+          else if( l.layerType == "dynamic")
+          {
+            var lyr = new esri.layers.ArcGISDynamicMapServiceLayer(l.url, l.options);
+            map.addLayer(lyr);            
+          }
 
           // add a radio/check for the layer
           l.controlType = l.controlType || "radio";
