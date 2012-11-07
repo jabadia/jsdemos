@@ -34,7 +34,12 @@
           return;
         }
         var ext = new esri.geometry.Extent(
-          {"xmin":-1497930,"ymin":4258933,"xmax":793957,"ymax":5481925,"spatialReference":{"wkid":102100}}
+          {
+            "xmin":-1497930,
+            "ymin": 4258933,
+            "xmax":  793957,
+            "ymax": 5481925,
+            "spatialReference":{"wkid":102100}}
           );
         map = new esri.Map("map", {
           slider: false,
@@ -50,52 +55,74 @@
         var wtl = esri.layers.WebTiledLayer;
         // references to dom nodes
         var lc = dojo.byId("mapLayerContainer");
-        var ll = dojo.byId("mapLayerList");
+        var llr = dojo.byId("mapLayerListRadio");
+        var llc = dojo.byId("mapLayerListCheck");
+
         var mapNode = dojo.byId("map");
         // clear out the side bar
-        ll.innerHTML = "";
+        llr.innerHTML = "";
+        llc.innerHTML = "";
+
         // create and add the layers
         // show a radio button for each
         dojo.forEach(mapLayers.info, function(l) {
           var lyr = new wtl(l.url, l.options);
           map.addLayer(lyr);
-          // add a radio for the layer
+
+          // add a radio/check for the layer
+          l.controlType = l.controlType || "radio";
+          list = l.controlType=="radio"? llr : llc;
+
+          var item = dojo.create("div", null, list, "first");
           dojo.create("input", {
-            "type": "radio",
+            "type": l.controlType,
             "checked": l.options.visible,
             "name": "tiledLayers",
             "id": l.options.id,
             "value": l.options.id
-          }, ll, "last");
+          }, item, "last");
           dojo.create("label", { 
             "for": l.options.id,
             "innerHTML": l.options.id
-          }, ll, "last");
-          dojo.create("br", null, ll, "last");
+          }, item, "last");
+          //dojo.create("br", null, list, "last");
         });
         
         // event delegation to toggle layers
-        dojo.connect(ll, "onclick", function(e) {
-          // console.log("clicked: ", e.target.id, dojo.byId(e.target.id));
-          if ( e.target === this || !dojo.byId(e.target.id) ) { 
-            // return if the actual pane was clicked or 
-            // if unable to find the DOM node for a layer
-            return;
-          }
-          // hide other layers
-          dojo.forEach(map.layerIds, function(id) {
-            map.getLayer(id).hide();
+        dojo.forEach([llr,llc], function(ll)
+        {
+          dojo.connect(ll, "onclick", function(e) {
+            // console.log("clicked: ", e.target.id, dojo.byId(e.target.id));
+            if ( e.target === this || !dojo.byId(e.target.id) ) { 
+              // return if the actual pane was clicked or 
+              // if unable to find the DOM node for a layer
+              return;
+            }
+
+            dojo.forEach(map.layerIds, function(id) {
+              var isChecked = dojo.byId(id).checked;
+              if(isChecked) 
+                map.getLayer(id).show();
+              else
+                map.getLayer(id).hide();
+            });
+            /*
+            // hide other layers
+            dojo.forEach(map.layerIds, function(id) {
+              map.getLayer(id).hide();
+            });
+            // show the layer with the clicked radio button
+            var layer = map.getLayer(e.target.id);
+            layer.show();
+            */
           });
-          // show the layer with the clicked radio button
-          var layer = map.getLayer(e.target.id);
-          layer.show();
         });
 
         // create an instance of extras.LayerListToggle to 
         // position the layer list as necessary on smaller screens
         // see extras/LayerListToggle.js for info on arguments and methods
         var llt = new extras.LayerListToggle({
-          "list": ll, "listContainer": lc, "mapNode": mapNode
+          "list": dojo.byId('twoLists'), "listContainer": lc, "mapNode": mapNode
         });
 
         // toggle the visibility of the mapLayerList div
@@ -135,7 +162,10 @@
   </div>
   <div class="row">
     <div id="mapLayerContainer" class="col">Capas:
-      <div id="mapLayerList"></div>
+      <div id="twoLists">
+        <div id="mapLayerListCheck"></div>
+        <div id="mapLayerListRadio"></div>
+      </div>
     </div>
     <div class="mapContainer col">
       <div id="map"> 
