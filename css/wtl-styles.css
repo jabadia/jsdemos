@@ -71,11 +71,24 @@ div {
 }
 
 .mapLayerList {
+  /*
     padding: 5px 5px 0 5px;
     margin: 5px 0 0 0;
     border: 1px #888 solid;
+  */
   }
-  
+
+.group {
+    padding: 5px 5px 0 5px;
+    margin: 5px 0;
+    border: 1px #888 solid;  
+}
+
+#twoLists {
+    overflow: scroll;
+    height: 100%;
+}
+
 /* drop shadow styles */
 .ds { background: #000; overflow: hidden; position: absolute; z-index: 2; }
 #ds-l div { height: 100%; }
@@ -160,7 +173,7 @@ div {
     height: 800px;
     padding-top: 10px;
     width:25.0%;
-  }
+}
 
   .mapContainer {
     border-left-width: 0;

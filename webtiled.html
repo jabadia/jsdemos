@@ -26,6 +26,7 @@
       dojo.require("esri.layers.WebTiledLayer");
       dojo.require("esri.layers.FeatureLayer");
       dojo.require("esri.layers.agsdynamic");
+      dojo.require("esri.layers.agstiled");
       dojo.require("esri.layers.wmts");
       dojo.require("extras.LayerListToggle");      
       
@@ -57,8 +58,6 @@
           dojo.connect(window, "resize", map, map.resize);
         });
 
-        // alias for WebTiledLayer constructor
-        var wtl = esri.layers.WebTiledLayer;
         // references to dom nodes
         var lc = dojo.byId("mapLayerContainer");
         var llr = dojo.byId("mapLayerListRadio");
@@ -69,36 +68,31 @@
         llr.innerHTML = "";
         llc.innerHTML = "";
 
+        var currentGroup = null;
+
         // create and add the layers
         // show a radio button for each
-        dojo.forEach(mapLayers.info, function(l) {
+        dojo.forEach(mapLayers.info, function(l) 
+        {
           l.layerType = l.layerType || "webtiled";
-          if( l.layerType == "webtiled" )
-          {
-            var lyr = new wtl(l.url, l.options);
-            map.addLayer(lyr);
-          }
-          else if( l.layerType == "feature")
-          {
-            var lyr = new esri.layers.FeatureLayer(l.url, l.options);
-            map.addLayer(lyr);
-          }
-          else if( l.layerType == "dynamic")
-          {
-            var lyr = new esri.layers.ArcGISDynamicMapServiceLayer(l.url, l.options);
-            map.addLayer(lyr);            
-          }
-          else if( l.layerType == "wmts")
-          {
-            var lyr = new esri.layers.WMTSLayer(l.url, l.options);
-            map.addLayer(lyr);
-          }
+          var lyr;
+          if( l.layerType == "webtiled" )    { lyr = new esri.layers.WebTiledLayer(l.url, l.options); }
+          else if( l.layerType == "agstiled"){ lyr = new esri.layers.ArcGISTiledMapServiceLayer(l.url, l.options); }
+          else if( l.layerType == "feature") { lyr = new esri.layers.FeatureLayer(l.url, l.options); }
+          else if( l.layerType == "dynamic") { lyr = new esri.layers.ArcGISDynamicMapServiceLayer(l.url, l.options); }
+          else if( l.layerType == "wmts")    { lyr = new esri.layers.WMTSLayer(l.url, l.options); }
+          map.addLayer(lyr);
 
           // add a radio/check for the layer
           l.controlType = l.controlType || "radio";
           list = l.controlType=="radio"? llr : llc;
 
-          var item = dojo.create("div", null, list, "first");
+          if( currentGroup == null || l.group != currentGroup.id )
+          {
+            currentGroup = dojo.create("div", { "id": l.group, "class": "group" }, list, "first");
+          }
+
+          var item = dojo.create("div", null, currentGroup, "first");
           dojo.create("input", {
             "type": l.controlType,
             "checked": l.options.visible,
