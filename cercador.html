@@ -1,0 +1,210 @@
+<!DOCTYPE html> 
+<html> 
+  <head> 
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"> 
+    <meta http-equiv="X-UA-Compatible" content="IE=7,IE=9" />   
+   <!--The viewport meta tag is used to improve the presentation and behavior of the samples on iOS devices-->
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Consulta Datos Estadísticos IDESCAT</title> 
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/dojo/dijit/themes/claro/claro.css"> 
+    <link rel="stylesheet" type="text/css" href="http://serverapi.arcgisonline.com/jsapi/arcgis/3.2/js/esri/css/esri.css" />
+    
+    <style> 
+      html, body { height: 98%; width: 98%; margin: 0; padding: 5px; }
+      #loadingImg { z-index: 100; position: absolute; height: 100%; width: 100%; background: url(loading.gif) no-repeat center;}
+      .dataTable th { text-align: left; }
+      .dataTable td { text-align: right; }
+    </style> 
+    <script type="text/javascript">var djConfig = {parseOnLoad: true};</script> 
+    <script type="text/javascript" src="http://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.2"></script> 
+    
+    <script type="text/javascript"> 
+      dojo.require("dijit.layout.BorderContainer");
+      dojo.require("dijit.layout.ContentPane");
+      dojo.require("dijit.layout.AccordionContainer");
+      dojo.require("esri.map");
+      dojo.require("esri.layers.wms");
+      dojo.require("esri.layers.FeatureLayer");
+      dojo.require("esri.tasks.query");
+      dojo.require("esri.dijit.Popup");
+      dojo.require("dojo.query");
+      dojo.require("dojo.number");
+      
+      var map;
+      var loading;
+
+      function showLoading() 
+      {
+        esri.show(loading);
+        map.disableMapNavigation();
+        map.hideZoomSlider();
+      }
+
+      function hideLoading(error) 
+      {
+        esri.hide(loading);
+        map.enableMapNavigation();
+        map.showZoomSlider();
+        console.log(error||"no error");
+      }      
+ 
+      function generateTable(data)
+      {
+        var table = "";
+        var columns = data.fitxes.cols.col;
+        var indicadors = data.fitxes.indicadors.i;
+        
+        table += "<table class='dataTable'><tr><th></th><th>"
+        table += dojo.map( columns, function(c) { return c.content; }).join("</th><th>");
+        table += "</th></tr>";
+
+        dojo.forEach( indicadors, function(i)
+        {
+          table += "<tr>";
+          table += "<th>" + i.c + "</th>";
+          table += "<td>" + dojo.map(i.v.split(','), function(v) { return dojo.number.format(v); }).join('</td><td>') + "</td>";
+          table += "</tr>";
+        });
+        table += "</table>";
+
+        return table;
+      }
+
+      function init() 
+      {
+        esri.config.defaults.io.proxyUrl = "proxy.php";
+
+        // zoom inicial a Barcelona
+        var initExtent = new esri.geometry.Extent({
+          "xmin":186118.3545806504,
+          "ymin":5056605.41066416,
+          "xmax":290531.33521806035,
+          "ymax":5084122.740846787,
+          "spatialReference":{"wkid":"102100"}
+        });
+
+        var popup = new esri.dijit.Popup({
+          fillSymbol: new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID, new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, new dojo.Color([255,0,0]), 2), new dojo.Color([255,255,0,0.25]))
+        }, dojo.create("div"));
+
+        map = new esri.Map("map",{infoWindow:popup, extent:initExtent});
+        var basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");//http://www.mapabase.es/ArcGIS/rest/services/Raster/Mapabase_o_WGS84_WM_MB2/MapServer");
+        map.addLayer(basemap);
+
+        var municipios = new esri.layers.FeatureLayer("http://services.arcgis.com/qkUvCrgGj4CxYfQu/arcgis/rest/services/Municipios/FeatureServer/0",
+          {
+            //mode: "MODE_SELECTION",
+            editable: false,
+            autoGeneralize: true,
+            outFields: ["Codigo"]
+          });
+
+        var outline = new esri.symbol.SimpleLineSymbol()
+          .setColor(dojo.colorFromHex('#fff'));
+        
+        var sym = new esri.symbol.SimpleFillSymbol()
+          .setColor(new dojo.Color([52, 67, 83, 0.4]))
+          .setOutline(outline);
+        
+        municipios.setRenderer(new esri.renderer.SimpleRenderer(sym));
+        map.addLayer(municipios);
+
+       /*
+        var wmsLayer = new esri.layers.WMSLayer("http://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?"); 
+        wmsLayer.setVisibleLayers([0,1,2,3,4,5,6,7,8,9,10,11,12]);  
+        wmsLayer.setImageFormat("png");
+        map.addLayer(wmsLayer);
+        */
+
+        loading = dojo.byId("loadingImg");  //loading image. id
+        dojo.connect(map,"onUpdateStart",showLoading);
+        dojo.connect(map,"onUpdateEnd",hideLoading);      
+
+        dojo.connect(map, 'onLoad', function(theMap) 
+        {
+          var selectQuery = new esri.tasks.Query();
+
+          //resize the map when the browser resizes
+          dojo.connect(dijit.byId('map'), 'resize', map,map.resize);
+
+          dojo.connect(dijit.byId('map'), 'onClick', function(evt)
+          {
+            if( evt.target instanceof HTMLDivElement)
+            {
+              // detecta clicks sobre el popup p.ej. para cerrarlo, y no llama a GetFeatureInfo en ese caso
+              console.log("click on HTML!");
+              return true;
+            }
+
+            showLoading();
+            var point = evt.mapPoint;
+            selectQuery.geometry = point;
+            var query = municipios.selectFeatures(selectQuery, esri.layers.FeatureLayer.SELECTION_NEW);
+
+            query.then(function()
+            {
+              if( municipios.graphics.length == 0 )
+              {
+                console.log("no hay municipio seleccionado");
+                map.infoWindow.hide();
+                hideLoading();
+              }
+              else
+              {
+                var codigoMunicipio = municipios.graphics[0].attributes["Codigo"];
+                console.log( codigoMunicipio );
+
+                // http://www.idescat.cat/api/emex/?lang=es
+                var getDataRequest = esri.request({
+                  url: 'http://api.idescat.cat/emex/v1/dades.json',
+                  content: {
+                    id: codigoMunicipio,
+                    i: "f171,f36,f42",
+                    tipus: "mun"
+                  },
+                  handleAs: "json"
+                });
+
+                getDataRequest.then(function(response)
+                {
+                  var content = generateTable(response);
+                  //https://www.google.com/fusiontables/exporttable?query=select%20*%20from%201zfdLwKFtojeEKlHIi-1vU1Wt5uCRxi8NvKcN-EY
+                  //http://www20.gencat.cat/portal/site/dadesobertes/menuitem.db4d3cf2bccf921baacf3010b0c0e1a0/?vgnextoid=49b19ee9acb42310VgnVCM1000000b0c1e0aRCRD&vgnextchannel=49b19ee9acb42310VgnVCM1000000b0c1e0aRCRD&vgnextfmt=detall2&id=5&newLang=es_ES
+                  console.log(content);
+                  map.infoWindow.setTitle("<img style='margin-bottom: -2px;' src='http://www.idescat.cat/images/idescat.png'>.cat");
+                  map.infoWindow.setContent(content);
+                  map.infoWindow.show(point);
+                  map.infoWindow.resize(300,140);
+                  hideLoading();
+                },
+                function(error)
+                {
+                  map.infoWindow.setTitle("idescat.cat - ERROR");
+                  map.infoWindow.setContent(error.responseText);
+                  map.infoWindow.show(point);
+                  hideLoading(error);  
+                });
+              }
+            });
+          });
+          /*
+
+          });
+*/
+        });
+
+      }      
+      dojo.addOnLoad(init);
+
+    </script> 
+  </head> 
+  
+  <body class="claro"> 
+    <div id="content" dojotype="dijit.layout.BorderContainer" design="headline" gutters="true" style="width: 100%; height: 100%; margin: 0;"> 
+      <div id="map" dojotype="dijit.layout.ContentPane" region="center" style="overflow:hidden;">
+      </div> 
+      <div id="loadingImg"></div>
+    </div> 
+  </body> 
+ 
+</html>
