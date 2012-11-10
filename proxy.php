@@ -43,7 +43,8 @@
     array( 'url' => 'http://sampleserver2.arcgisonline.com/ArcGIS/rest/services/', 'matchAll' => true, 'token' => '' ),
     array( 'url' => 'http://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx', 'matchAll' => true, 'token' => '' ),
     array( 'url' => 'http://www.gencat.cat',                                       'matchAll' => true, 'token' => '' ),
-    array( 'url' => 'http://54.247.188.183',                                       'matchAll' => true, 'token' => '' )
+    array( 'url' => 'http://54.247.188.183',                                       'matchAll' => true, 'token' => '' ),
+    array( 'url' => 'http://api.idescat.cat',                                      'matchAll' => true, 'token' => '' )
   );
   /***************************************************************************/
   
