@@ -77,23 +77,11 @@
           //resize the map when the browser resizes
           dojo.connect(dijit.byId('map'), 'resize', map,map.resize);
 
-          dojo.connect(dijit.byId('map'), 'onClick', function(evt)
+          dojo.connect(map, 'onClick', function(evt)
           {  
-            if( evt.target instanceof HTMLDivElement)
-            {
-              // detecta clicks sobre el popup p.ej. para cerrarlo, y no llama a GetFeatureInfo en ese caso
-              console.log("click on HTML!");
-              return true;
-            }
-            
             var point = evt.mapPoint;
             var mapPoint = evt;
             var extent = map.extent;
-
-            // console.log(evt);
-            // console.log(point);
-            // console.log(extent);
-            // console.log(wmsLayer);
 
             showLoading();
 
