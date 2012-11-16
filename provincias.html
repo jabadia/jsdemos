@@ -151,12 +151,12 @@
         };
 
         dojo.connect(provincias, "onMouseOver", function(evt) {
-          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${PROV:NumberFormat}<br/>";
+          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${PROV}<br/>";
           showInfo(evt,t);
         });
 
         dojo.connect(municipios, "onMouseOver", function(evt) {
-          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${CPRO:NumberFormat}<br/><b>Código Municipio: </b>${CMUN:NumberFormat}<br/>";
+          var t = "<b>${NOMBRE}</b><hr><b>Código Provincia: </b>${CPRO}<br/><b>Código Municipio: </b>${CMUN}<br/>";
           showInfo(evt,t);
         });
 
