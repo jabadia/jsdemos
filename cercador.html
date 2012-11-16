@@ -60,10 +60,17 @@
 
         dojo.forEach( indicadors, function(i)
         {
+          if( i.v )
+          {
           table += "<tr>";
           table += "<th>" + i.c + (i.u? "<br />(" + i.u + ")" : "") + ":</th>";
           table += "<td>" + dojo.map(i.v.split(','), function(v) { return dojo.number.format(v); }).join('</td><td>') + "</td>";
           table += "</tr>";
+          }
+          else
+          {
+            console.log(i);
+          }
         });
         table += "</table>";
 
@@ -108,13 +115,6 @@
         
         municipios.setRenderer(new esri.renderer.SimpleRenderer(sym));
         map.addLayer(municipios);
-
-       /*
-        var wmsLayer = new esri.layers.WMSLayer("http://ovc.catastro.meh.es/Cartografia/WMS/ServidorWMS.aspx?"); 
-        wmsLayer.setVisibleLayers([0,1,2,3,4,5,6,7,8,9,10,11,12]);  
-        wmsLayer.setImageFormat("png");
-        map.addLayer(wmsLayer);
-        */
 
         loading = dojo.byId("loadingImg");  //loading image. id
         dojo.connect(map,"onUpdateStart",showLoading);
@@ -161,7 +161,7 @@
                   url: 'http://api.idescat.cat/emex/v1/dades.json',
                   content: {
                     id: codigoMunicipio,
-                    i: "f171,f36,f42,f262",
+                    i: "f171,f36,f42,f262,f3,f91,f92,f95",
                     tipus: "mun"
                   },
                   handleAs: "json"
