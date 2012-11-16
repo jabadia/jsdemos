@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Service Area</title>
+
+  <link rel="stylesheet" type="text/css" href="https://serverapi.arcgisonline.com/jsapi/arcgis/3.0/js/dojo/dijit/themes/claro/claro.css">
+  <style type="text/css"> 
+  body,html,#main{margin:0;padding:0;height:100%;width:100%;}
+  </style> 
+
+  <script type="text/javascript"> var djConfig = {parseOnLoad:true};</script> 
+  <script type="text/javascript" src="https://serverapi.arcgisonline.com/jsapi/arcgis/?v=3.0"></script>
+
+  <script type="text/javascript">
+  dojo.require("esri.map");  
+  dojo.require("esri.tasks.servicearea");  
+  dojo.require("dijit.dijit");
+  dojo.require("dijit.layout.BorderContainer");
+  dojo.require("dijit.layout.ContentPane");
+  dojo.require("esri.IdentityManager");
+  dojo.require("dojo.date.locale");
+
+  var map, serviceAreaTask,params, solveInProgress;
+  var refreshTimer = null;
+  var facility, pointSymbol, polygonSymbol;
+  var currentPoint = null, targetPoint = null;
+  var updateTimer = null;
+
+
+  function init()
+  {     
+    esri.config.defaults.io.proxyUrl = "/proxy.php";
+
+    map = new esri.Map("map", {
+      extent: new esri.geometry.Extent({
+        "xmin":-419079,
+        "ymin":4926778,
+        "xmax":-406199,
+        "ymax":4928412,
+        spatialReference:{wkid:102100}
+      })
+    });
+
+    dojo.connect(map,"onLoad",function(){
+      dojo.connect(dijit.byId('map'), 'resize', map, map.resize);
+    });
+
+    dojo.connect(map, "onClick", mapClickHandler);
+    dojo.connect( dojo.byId('breakSliderValue'), "onchange", null, function(evt) { breakDisplay(); solve(); });
+    dojo.connect( dojo.byId('timeSliderValue'),  "onchange", null, function(evt) { timeDisplay(); solve(); });
+
+    breakDisplay();
+    timeDisplay();
+
+    var baseMapLayer = new esri.layers.ArcGISTiledMapServiceLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer");
+    map.addLayer(baseMapLayer);
+
+    params = new esri.tasks.ServiceAreaParameters();
+    params.defaultBreaks= [10];
+    params.outSpatialReference = map.spatialReference;
+    params.outputGeometryPrecision = 0.0;
+    params.outputGeometryPrecisionUnits="esriDecimalDegrees";
+    params.outputPolygons="esriNAOutputPolygonSimplified";
+    params.outputLines="esriNAOutputLineNone";
+    params.doNotLocateOnRestrictedElements = true;
+    params.overlapPolygons = true;
+
+    serviceAreaTask = new esri.tasks.ServiceAreaTask("https://networkanalysis.arcgis.com/arcgis/rest/services/World/ServiceAreas/NAServer/ServiceArea_World");
+
+    pointSymbol = new esri.symbol.SimpleMarkerSymbol(
+      esri.symbol.SimpleMarkerSymbol.STYLE_DIAMOND, 
+      10,
+      new esri.symbol.SimpleLineSymbol(
+        esri.symbol.SimpleLineSymbol.STYLE_SOLID,
+        new dojo.Color([88,116,152]), 1
+        ),
+      new dojo.Color([88,116,152,0.45])
+      );
+
+    polygonSymbol = new esri.symbol.SimpleFillSymbol(esri.symbol.SimpleFillSymbol.STYLE_SOLID,  new esri.symbol.SimpleLineSymbol(esri.symbol.SimpleLineSymbol.STYLE_SOLID, 
+      new dojo.Color([0,0,255, 0.2]), 3),new dojo.Color([0,0,255, 0.2]));
+
+    solveInProgress = false;
+  }
+
+  function breakDisplay() 
+  {
+    dojo.byId("dOut1").innerHTML = Math.round(parseFloat(dojo.byId("breakSliderValue").value)*10)/10 + " min";
+  }
+  function timeDisplay() 
+  {
+    var date = new Date(parseInt(dojo.byId("timeSliderValue").value)  + (new Date()).getTimezoneOffset() * 60 * 1000);
+    dojo.byId("dOut2").innerHTML = dojo.date.locale.format(date, { fullYear: true, formatLenght: 'short'});
+  }
+
+  function solve()
+  {
+    clearTimeout(refreshTimer);
+    refreshTimer = null;
+    if (solveInProgress) 
+    {
+      refreshTimer = setTimeout(function(e){solve();}, 10);
+      return;
+    }
+
+    var breakValue = dojo.byId("breakSliderValue").value;
+    params.defaultBreaks= [parseFloat(breakValue)];
+
+    var timeValue = dojo.byId("timeSliderValue").value;
+    var startTime = new Date(parseInt(timeValue));
+    params.timeOfDay = startTime;
+
+    solveInProgress = true;
+
+    serviceAreaTask.solve(params,
+      function(solveResult)
+      {
+        solveInProgress = false;
+        var pg = solveResult.serviceAreaPolygons[0];
+        var epg = new esri.Graphic(pg.geometry, polygonSymbol);
+
+        map.graphics.clear(); //clear existing graphics    
+        map.graphics.add(epg);
+        map.graphics.add(facility);
+      },
+      function(err)
+      {
+        solveInProgress = false;
+        console.log(err.message);
+      });
+  }
+
+  function mapClickHandler(evt)
+  {
+    var inPoint = new esri.geometry.Point(evt.mapPoint.x,evt.mapPoint.y,map.spatialReference);
+    targetPoint = inPoint;
+
+    if( currentPoint == null )
+    {
+      currentPoint = inPoint;
+    }
+
+    updateTimer = setTimeout(function(e){mapUpdate();}, 500);
+  }
+
+  function mapUpdate()
+  {
+    var t = 0.8;
+    currentPoint.x = currentPoint.x * t + targetPoint.x * (1-t);
+    currentPoint.y = currentPoint.y * t + targetPoint.y * (1-t);
+    console.log(currentPoint);
+    console.log(targetPoint);
+
+    if( Math.abs(currentPoint.x - targetPoint.x) < 50.0 && Math.abs(currentPoint.y - targetPoint.y) < 50.0 )
+    {
+      currentPoint = targetPoint;
+      clearTimeout(updateTimer);
+    }
+    else
+    {
+      updateTimer = setTimeout(function(e){mapUpdate();}, 500);
+    }
+
+    //define the symbology used to display the results and input point
+    facility = new esri.Graphic(currentPoint, pointSymbol);
+
+    //map.graphics.clear(); //clear existing graphics    
+    map.graphics.add(facility);
+
+    var facilities = new esri.tasks.FeatureSet();
+    facilities.features = [facility];
+    params.facilities = facilities;
+
+    solve();
+  }     
+
+  dojo.addOnLoad(init);
+</script>
+</head>
+
+<body class="claro"> 
+  <div dojotype="dijit.layout.BorderContainer" design="headline" gutters="false" style="width:100%;height:100%;margin:0px;">
+    <div dojotype="dijit.layout.ContentPane" region="top" style="margin:5px;5px;5px;5px;">    
+      <div><input type="range" id="breakSliderValue" style="width:400px" min="1" max="120" value="10" step="0.05" /><span id="dOut1"/></div>
+      <div><input type="range" id="timeSliderValue" style="width:400px" min="1344556801000" max="1344643199000" value="1344600000000" step="60000" /><span id="dOut2"/></div>
+      <b>Click to find the service area polygon</b></div>
+      <div id="map" dojotype="dijit.layout.ContentPane" region="center" style="border:1px solid #000;"></div>    
+    </div>  
+  </body>
+  </html> 
+
+
