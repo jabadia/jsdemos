@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>Area de Servicio</title>
   
   <link rel="stylesheet" type="text/css" href="https://serverapi.arcgisonline.com/jsapi/arcgis/3.0/js/dojo/dijit/themes/claro/claro.css">
@@ -63,7 +64,7 @@
     params.doNotLocateOnRestrictedElements = true;
     params.overlapPolygons = true;
   
-    serviceAreaTask = new esri.tasks.ServiceAreaTask("https://networkanalysis.arcgis.com/arcgis/rest/services/World/ServiceAreas/NAServer/ServiceArea_World");
+    serviceAreaTask = new esri.tasks.ServiceAreaTask("http://route.arcgis.com/arcgis/rest/services/World/ServiceAreas/NAServer/ServiceArea_World/solveServiceArea");
 
     pointSymbol = new esri.symbol.SimpleMarkerSymbol(
         esri.symbol.SimpleMarkerSymbol.STYLE_DIAMOND, 
